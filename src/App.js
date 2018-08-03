@@ -7,27 +7,26 @@ import "@vkontakte/vkui/dist/vkui.css";
 class App extends React.Component {
   constructor(props) {
     super(props);
-
+    this.share = this.share.bind(this);
     this.state = {
       activeView: "view1",
       name: null,
       city: null,
-      post: null
+      post: null,
+      user_id: 0
     };
     let self = this;
     connect.subscribe(e => {
       e = e.detail;
       if (e["type"] === "VKWebAppGetUserInfoResult") {
         let name = e["data"]["first_name"] + " " + e["data"]["last_name"];
-        let owner_id = e["data"]["id"];
+        let id = e["data"]["id"];
         let city = e["data"]["city"]["title"];
         self.setState({ name: name });
-        self.setState({ owner_id: owner_id });
+        self.setState({ user_id: id });
         self.setState({ city: city });
-      } else if (e["type"] === "VKWebAppShowWallPostBoxResult") {
-        let post = "vk.com/wall" + self.owner_id + "_" + e["data"]["post_id"];
-        self.setState({ post: post });
-        self.setState({ activeView: "view3" });
+      } else if (e["type"] === "VKWebAppShowWallPostBoxFailed") {
+        self.setState({ activeView: "view1" });
       }
     });
     if (this.state.name === null) {
@@ -36,18 +35,6 @@ class App extends React.Component {
     /*if (this.state.post === null) {
       connect.send("VKWebAppShowWallPostBoxResult");
     }*/
-  }
-
-  userInfo() {
-    let newState = App.getInitState();
-    connect.subscribe(e => {
-      let result = e.detail;
-      if (result["type"] === "VKWebAppGetUserInfoResult") {
-        newState.name = result["data"]["first_name"];
-      }
-    });
-    connect.send("VKWebAppGetUserInfo", {});
-    this.setState(newState);
   }
 
   render() {
@@ -66,7 +53,7 @@ class App extends React.Component {
                 >
                   Обо мне
                 </UI.Button>
-                <UI.Button size="m" onClick={this.share()} stretched level="2">
+                <UI.Button size="m" onClick={this.share} stretched level="2">
                   Рассказать
                 </UI.Button>
               </UI.Div>
@@ -114,9 +101,20 @@ class App extends React.Component {
     );
   }
   share() {
-    connect.send("VKWebAppShowWallPostBox", {
-      message: "Если эта запись опубликовалась -- я счастливый человек"
+    let posts = this;
+    connect.subscribe(e => {
+      e = e.detail;
+      if (e["type"] === "VKWebAppShowWallPostBoxResult") {
+        let post = "vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
+        posts.setState({ post: post });
+        posts.self.setState({ activeView: "view3" });
+      }
     });
+
+    connect.send("VKWebAppShowWallPostBox", {
+      message: 'Если эта запись опубликовалась -- я счастливый человек -- "{$this.state.name}"'
+    });
+
   }
 }
 
