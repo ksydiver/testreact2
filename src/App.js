@@ -93,8 +93,10 @@ class App extends React.Component {
             <UI.Group title="Информация">
               <UI.List>
                 <UI.ListItem>{this.state.name}</UI.ListItem>
-                <UI.ListItem>{this.state.city}</UI.ListItem>
-                <UI.ListItem>{this.state.friends_count}</UI.ListItem>
+                <UI.ListItem>Город: {this.state.city}</UI.ListItem>
+                <UI.ListItem>
+                  Друзей всего: {this.state.friends_count}
+                </UI.ListItem>
               </UI.List>
             </UI.Group>
             <UI.Group>
