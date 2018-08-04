@@ -15,7 +15,7 @@ class App extends React.Component {
       post: null,
       user_id: 0,
       access_token: null,
-      friends_count: null
+      friends_count: 0
     };
     let self = this;
     connect.subscribe(e => {
@@ -23,7 +23,7 @@ class App extends React.Component {
       if (e["type"] === "VKWebAppAccessTokenReceived") {
         let access_token = e["data"]["access_token"];
         self.setState({ access_token: access_token });
-        this.props.connect.send("VKWebAppCallAPIMethod", {
+        connect.send("VKWebAppCallAPIMethod", {
           method: "friends.get",
           params: { v: "5.80", access_token: this.state.access_token }
         });
@@ -46,6 +46,12 @@ class App extends React.Component {
     });
     if (this.state.name === null) {
       connect.send("VKWebAppGetUserInfo");
+    }
+    if (this.state.friends_count === 0) {
+      connect.send("VKWebAppCallAPIMethod", {
+        method: "friends.get",
+        params: { v: "5.80", access_token: this.state.access_token }
+      });
     }
     if (this.state.access_token === null) {
       connect.send("VKWebAppGetAuthToken", {
