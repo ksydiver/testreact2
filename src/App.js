@@ -69,7 +69,7 @@ class App extends React.Component {
       <UI.Root activeView={this.state.activeView}>
         <UI.View activePanel="panel1.1" id="view1">
           <UI.Panel id="panel1.1">
-            <UI.PanelHeader>Кто я?</UI.PanelHeader>
+            <UI.PanelHeader>Кто я такой?</UI.PanelHeader>
             <UI.Group title="Сейчас узнаем">
               <UI.Div style={{ display: "flex" }}>
                 <UI.Button
@@ -122,9 +122,7 @@ class App extends React.Component {
             <UI.Group title="Ссылка на запись">
               <UI.List>
                 <UI.ListItem>
-                  <a href="{this.state.post}" title={this.state.post}>
-                    Freepik
-                  </a>
+                  <a href="{this.state.post}">{this.state.post}</a>
                 </UI.ListItem>
               </UI.List>
             </UI.Group>
@@ -150,7 +148,7 @@ class App extends React.Component {
       e = e.detail;
       if (e["type"] === "VKWebAppShowWallPostBoxResult") {
         let post =
-          "vk://vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
+          "vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
         posts.setState({ post: post });
         posts.setState({ activeView: "view3" });
       }
