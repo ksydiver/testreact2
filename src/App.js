@@ -13,12 +13,24 @@ class App extends React.Component {
       name: null,
       city: null,
       post: null,
-      user_id: 0
+      user_id: 0,
+      access_token: null,
+      friends_count: 0
     };
     let self = this;
     connect.subscribe(e => {
       e = e.detail;
-      if (e["type"] === "VKWebAppGetUserInfoResult") {
+      if (e["type"] === "VKWebAppAccessTokenReceived") {
+        let access_token = e["data"]["access_token"];
+        self.setState({ access_token: access_token });
+        connect.send("VKWebAppCallAPIMethod", {
+          method: "friends.get",
+          params: { v: "5.80", access_token: this.state.access_token }
+        });
+      } else if (
+        e["type"] === "VKWebAppGetUserInfoResult" &&
+        e["data"]["city"] !== null
+      ) {
         let name = e["data"]["first_name"] + " " + e["data"]["last_name"];
         let id = e["data"]["id"];
         let city = e["data"]["city"]["title"];
@@ -27,10 +39,25 @@ class App extends React.Component {
         self.setState({ city: city });
       } else if (e["type"] === "VKWebAppShowWallPostBoxFailed") {
         self.setState({ activeView: "view1" });
+      } else if (e["type"] === "VKWebAppCallAPIMethodResult") {
+        let friends_count = e["data"]["response"]["count"];
+        self.setState({ friends_count: friends_count });
       }
     });
     if (this.state.name === null) {
       connect.send("VKWebAppGetUserInfo");
+    }
+    if (this.state.friends_count === 0) {
+      connect.send("VKWebAppCallAPIMethod", {
+        method: "friends.get",
+        params: { v: "5.80", access_token: this.state.access_token }
+      });
+    }
+    if (this.state.access_token === null) {
+      connect.send("VKWebAppGetAuthToken", {
+        app_id: 6603324,
+        scope: "friends"
+      });
     }
     /*if (this.state.post === null) {
       connect.send("VKWebAppShowWallPostBoxResult");
@@ -42,8 +69,8 @@ class App extends React.Component {
       <UI.Root activeView={this.state.activeView}>
         <UI.View activePanel="panel1.1" id="view1">
           <UI.Panel id="panel1.1">
-            <UI.PanelHeader>Кто я?</UI.PanelHeader>
-            <UI.Group title="Щас узнаем">
+            <UI.PanelHeader>Кто я такой?</UI.PanelHeader>
+            <UI.Group title="Сейчас узнаем">
               <UI.Div style={{ display: "flex" }}>
                 <UI.Button
                   size="m"
@@ -53,7 +80,14 @@ class App extends React.Component {
                 >
                   Обо мне
                 </UI.Button>
-                <UI.Button size="m" onClick={this.share} stretched level="2">
+                <UI.Button
+                  size="m"
+                  onClick={() => {
+                    this.share();
+                  }}
+                  stretched
+                  level="2"
+                >
                   Рассказать
                 </UI.Button>
               </UI.Div>
@@ -66,7 +100,10 @@ class App extends React.Component {
             <UI.Group title="Информация">
               <UI.List>
                 <UI.ListItem>{this.state.name}</UI.ListItem>
-                <UI.ListItem>{this.state.city}</UI.ListItem>
+                <UI.ListItem>Город: {this.state.city}</UI.ListItem>
+                <UI.ListItem>
+                  Друзей всего: {this.state.friends_count}
+                </UI.ListItem>
               </UI.List>
             </UI.Group>
             <UI.Group>
@@ -84,7 +121,9 @@ class App extends React.Component {
             <UI.PanelHeader>Запись на стене</UI.PanelHeader>
             <UI.Group title="Ссылка на запись">
               <UI.List>
-                <UI.ListItem>{this.state.post}</UI.ListItem>
+                <UI.ListItem>
+                  <a href={this.state.post}>{this.state.post}</a>
+                </UI.ListItem>
               </UI.List>
             </UI.Group>
             <UI.Group>
@@ -101,20 +140,23 @@ class App extends React.Component {
     );
   }
   share() {
+    connect.send("VKWebAppShowWallPostBox", {
+      message: this.state.name
+    });
     let posts = this;
     connect.subscribe(e => {
       e = e.detail;
       if (e["type"] === "VKWebAppShowWallPostBoxResult") {
-        let post = "vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
+        let post =
+          "vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
         posts.setState({ post: post });
-        posts.self.setState({ activeView: "view3" });
+        posts.setState({ activeView: "view3" });
+      } else if (e["type"] === "VKWebAppShowWallPostBoxFailed") {
+        let error = e["data"]["error_type"];
+        posts.setState({ post: error });
+        posts.setState({ activeView: "view3" });
       }
     });
-
-    connect.send("VKWebAppShowWallPostBox", {
-      message: 'Если эта запись опубликовалась -- я счастливый человек -- "{$this.state.name}"'
-    });
-
   }
 }
 
