@@ -30,11 +30,12 @@ class App extends React.Component {
       } else if (e["type"] === "VKWebAppGetUserInfoResult") {
         let name = e["data"]["first_name"] + " " + e["data"]["last_name"];
         let id = e["data"]["id"];
-        if (e["data"]["city"]["title"] === null) {
-          self.setState({ city: "Город не установлен" });
-        } else {
+
+        if (e["data"]["city"]) {
           let city = e["data"]["city"]["title"];
           self.setState({ city: city });
+        } else {
+          self.setState({ city: "не установлен" });
         }
         self.setState({ name: name });
         self.setState({ user_id: id });
@@ -70,7 +71,7 @@ class App extends React.Component {
       <UI.Root activeView={this.state.activeView}>
         <UI.View activePanel="panel1.1" id="view1">
           <UI.Panel id="panel1.1">
-            <UI.PanelHeader>Кто я?</UI.PanelHeader>
+            <UI.PanelHeader>Кто я такой?</UI.PanelHeader>
             <UI.Group title="Сейчас узнаем">
               <UI.Div style={{ display: "flex" }}>
                 <UI.Button
@@ -123,9 +124,7 @@ class App extends React.Component {
             <UI.Group title="Ссылка на запись">
               <UI.List>
                 <UI.ListItem>
-                  <a href={"https://" + this.state.post}>
-                    https://{this.state.post}
-                  </a>
+                  <a href={"https://" + this.state.post}>{this.state.post}</a>
                 </UI.ListItem>
               </UI.List>
             </UI.Group>
