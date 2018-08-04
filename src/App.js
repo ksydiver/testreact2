@@ -23,7 +23,14 @@ class App extends React.Component {
       if (e["type"] === "VKWebAppAccessTokenReceived") {
         let access_token = e["data"]["access_token"];
         self.setState({ access_token: access_token });
-      } else if (e["type"] === "VKWebAppGetUserInfoResult") {
+        this.props.connect.send("VKWebAppCallAPIMethod", {
+          method: "friends.get",
+          params: { v: "5.80", access_token: this.state.access_token }
+        });
+      } else if (
+        e["type"] === "VKWebAppGetUserInfoResult" &&
+        e["data"]["city"] !== null
+      ) {
         let name = e["data"]["first_name"] + " " + e["data"]["last_name"];
         let id = e["data"]["id"];
         let city = e["data"]["city"]["title"];
@@ -41,16 +48,10 @@ class App extends React.Component {
       connect.send("VKWebAppGetUserInfo");
     }
     if (this.state.access_token === null) {
-      connect.send("VKWebAppGetAuthToken", { app_id: 6603324, scope: "wall" });
-    }
-    if (this.state.friends_count === null) {
-      connect.send("VKWebAppCallAPIMethod", {
-        method: "friends.get",
-        params: { v: "5.80", access_token: this.state.access_token }
+      connect.send("VKWebAppGetAuthToken", {
+        app_id: 6603324,
+        scope: "friends"
       });
-    }
-    if (this.state.city === null) {
-      self.setState({ city: "Город определить не удалось" });
     }
     /*if (this.state.post === null) {
       connect.send("VKWebAppShowWallPostBoxResult");
@@ -62,7 +63,7 @@ class App extends React.Component {
       <UI.Root activeView={this.state.activeView}>
         <UI.View activePanel="panel1.1" id="view1">
           <UI.Panel id="panel1.1">
-            <UI.PanelHeader>Кто я?</UI.PanelHeader>
+            <UI.PanelHeader>Кто такой</UI.PanelHeader>
             <UI.Group title="Щас узнаем">
               <UI.Div style={{ display: "flex" }}>
                 <UI.Button
@@ -134,7 +135,7 @@ class App extends React.Component {
     });
 
     /*connect.send("VKWebAppShowWallPostBox", {
-      message: 'Если эта запись опубликовалась -- я счастливый человек -- "{$this.state.name}"'
+      message: "{$this.state.name}"
     });*/
   }
 }
