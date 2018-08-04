@@ -27,16 +27,17 @@ class App extends React.Component {
           method: "friends.get",
           params: { v: "5.80", access_token: this.state.access_token }
         });
-      } else if (
-        e["type"] === "VKWebAppGetUserInfoResult" &&
-        e["data"]["city"] !== null
-      ) {
+      } else if (e["type"] === "VKWebAppGetUserInfoResult") {
         let name = e["data"]["first_name"] + " " + e["data"]["last_name"];
         let id = e["data"]["id"];
-        let city = e["data"]["city"]["title"];
+        if (e["data"]["city"]["title"] === null) {
+          self.setState({ city: "Город не установлен" });
+        } else {
+          let city = e["data"]["city"]["title"];
+          self.setState({ city: city });
+        }
         self.setState({ name: name });
         self.setState({ user_id: id });
-        self.setState({ city: city });
       } else if (e["type"] === "VKWebAppShowWallPostBoxFailed") {
         self.setState({ activeView: "view1" });
       } else if (e["type"] === "VKWebAppCallAPIMethodResult") {
@@ -69,7 +70,7 @@ class App extends React.Component {
       <UI.Root activeView={this.state.activeView}>
         <UI.View activePanel="panel1.1" id="view1">
           <UI.Panel id="panel1.1">
-            <UI.PanelHeader>Кто я такой?</UI.PanelHeader>
+            <UI.PanelHeader>Кто я?</UI.PanelHeader>
             <UI.Group title="Сейчас узнаем">
               <UI.Div style={{ display: "flex" }}>
                 <UI.Button
@@ -122,7 +123,9 @@ class App extends React.Component {
             <UI.Group title="Ссылка на запись">
               <UI.List>
                 <UI.ListItem>
-                  <a href={this.state.post}>{this.state.post}</a>
+                  <a href={"https://" + this.state.post}>
+                    https://{this.state.post}
+                  </a>
                 </UI.ListItem>
               </UI.List>
             </UI.Group>
@@ -152,7 +155,7 @@ class App extends React.Component {
         posts.setState({ post: post });
         posts.setState({ activeView: "view3" });
       } else if (e["type"] === "VKWebAppShowWallPostBoxFailed") {
-        let error = e["data"]["error_data"];
+        let error = e["data"]["error_type"];
         posts.setState({ post: error });
         posts.setState({ activeView: "view3" });
       }
