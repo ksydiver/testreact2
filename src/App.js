@@ -122,7 +122,7 @@ class App extends React.Component {
             <UI.Group title="Ссылка на запись">
               <UI.List>
                 <UI.ListItem>
-                  <a href="{this.state.post}">{this.state.post}</a>
+                  <a href={this.state.post}>{this.state.post}</a>
                 </UI.ListItem>
               </UI.List>
             </UI.Group>
@@ -151,12 +151,12 @@ class App extends React.Component {
           "vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
         posts.setState({ post: post });
         posts.setState({ activeView: "view3" });
+      } else if (e["type"] === "VKWebAppShowWallPostBoxFailed") {
+        let error = e["data"]["error_data"];
+        posts.setState({ post: error });
+        posts.setState({ activeView: "view3" });
       }
     });
-
-    /*connect.send("VKWebAppShowWallPostBox", {
-      message: "{$this.state.name}"
-    });*/
   }
 }
 
