@@ -69,8 +69,8 @@ class App extends React.Component {
       <UI.Root activeView={this.state.activeView}>
         <UI.View activePanel="panel1.1" id="view1">
           <UI.Panel id="panel1.1">
-            <UI.PanelHeader>Кто такой</UI.PanelHeader>
-            <UI.Group title="Щас узнаем">
+            <UI.PanelHeader>Кто я?</UI.PanelHeader>
+            <UI.Group title="Сейчас узнаем">
               <UI.Div style={{ display: "flex" }}>
                 <UI.Button
                   size="m"
@@ -80,7 +80,14 @@ class App extends React.Component {
                 >
                   Обо мне
                 </UI.Button>
-                <UI.Button size="m" onClick={this.share} stretched level="2">
+                <UI.Button
+                  size="m"
+                  onClick={() => {
+                    this.share();
+                  }}
+                  stretched
+                  level="2"
+                >
                   Рассказать
                 </UI.Button>
               </UI.Div>
@@ -114,7 +121,11 @@ class App extends React.Component {
             <UI.PanelHeader>Запись на стене</UI.PanelHeader>
             <UI.Group title="Ссылка на запись">
               <UI.List>
-                <UI.ListItem>{this.state.post}</UI.ListItem>
+                <UI.ListItem>
+                  <a href="{this.state.post}" title={this.state.post}>
+                    Freepik
+                  </a>
+                </UI.ListItem>
               </UI.List>
             </UI.Group>
             <UI.Group>
@@ -131,14 +142,17 @@ class App extends React.Component {
     );
   }
   share() {
+    connect.send("VKWebAppShowWallPostBox", {
+      message: this.state.name
+    });
     let posts = this;
     connect.subscribe(e => {
       e = e.detail;
       if (e["type"] === "VKWebAppShowWallPostBoxResult") {
         let post =
-          "vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
+          "vk://vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
         posts.setState({ post: post });
-        posts.self.setState({ activeView: "view3" });
+        posts.setState({ activeView: "view3" });
       }
     });
 
