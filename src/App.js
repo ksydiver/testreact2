@@ -8,6 +8,7 @@ class App extends React.Component {
   constructor(props) {
     super(props);
     this.share = this.share.bind(this);
+    this.getInfo = this.getInfo.bind(this);
     this.state = {
       activeView: "view1",
       name: null,
@@ -15,52 +16,49 @@ class App extends React.Component {
       post: null,
       user_id: 0,
       access_token: null,
-      friends_count: 0
+      friends_count: null
     };
-    let self = this;
     connect.subscribe(e => {
       e = e.detail;
       if (e["type"] === "VKWebAppAccessTokenReceived") {
         let access_token = e["data"]["access_token"];
-        self.setState({ access_token: access_token });
-        connect.send("VKWebAppCallAPIMethod", {
-          method: "friends.get",
-          params: { v: "5.80", access_token: this.state.access_token }
+        this.setState({ access_token: access_token });
+      } else if (e["type"] === "VKWebAppAccessTokenFailed") {
+        let error = e["data"]["error_type"]["error_reason"];
+        this.setState({
+          friends_count: "количество не удалось получить." + error
         });
+        this.setState({ access_token: null });
       } else if (e["type"] === "VKWebAppGetUserInfoResult") {
         let name = e["data"]["first_name"] + " " + e["data"]["last_name"];
         let id = e["data"]["id"];
 
         if (e["data"]["city"]) {
           let city = e["data"]["city"]["title"];
-          self.setState({ city: city });
+          this.setState({ city: city });
         } else {
-          self.setState({ city: "не установлен" });
+          this.setState({ city: "не установлен" });
         }
-        self.setState({ name: name });
-        self.setState({ user_id: id });
+        this.setState({ name: name });
+        this.setState({ user_id: id });
       } else if (e["type"] === "VKWebAppShowWallPostBoxFailed") {
-        self.setState({ activeView: "view1" });
-      } else if (e["type"] === "VKWebAppCallAPIMethodResult") {
-        let friends_count = e["data"]["response"]["count"];
-        self.setState({ friends_count: friends_count });
+        this.setState({ activeView: "view1" });
       }
     });
+
+    /*if (this.state.access_token === null) {
+      connect.send("VKWebAppGetAuthToken", {
+        app_id: 6603324
+      });
+    }
+    connect.send("VKWebAppGetAuthToken", {
+      app_id: 6603324,
+      scope: "friends,wall,groups"
+    });*/
     if (this.state.name === null) {
       connect.send("VKWebAppGetUserInfo");
     }
-    if (this.state.friends_count === 0) {
-      connect.send("VKWebAppCallAPIMethod", {
-        method: "friends.get",
-        params: { v: "5.80", access_token: this.state.access_token }
-      });
-    }
-    if (this.state.access_token === null) {
-      connect.send("VKWebAppGetAuthToken", {
-        app_id: 6603324,
-        scope: "friends"
-      });
-    }
+
     /*if (this.state.post === null) {
       connect.send("VKWebAppShowWallPostBoxResult");
     }*/
@@ -76,7 +74,10 @@ class App extends React.Component {
               <UI.Div style={{ display: "flex" }}>
                 <UI.Button
                   size="m"
-                  onClick={() => this.setState({ activeView: "view2" })}
+                  onClick={() => {
+                    this.getInfo();
+                  }}
+                  /*{() => this.setState({ activeView: "view2" })}*/
                   stretched
                   style={{ marginRight: 8 }}
                 >
@@ -88,7 +89,7 @@ class App extends React.Component {
                     this.share();
                   }}
                   stretched
-                  level="2"
+                  style={{ marginRight: 8 }}
                 >
                   Рассказать
                 </UI.Button>
@@ -143,22 +144,44 @@ class App extends React.Component {
   }
   share() {
     connect.send("VKWebAppShowWallPostBox", {
-      message: this.state.name
+      message: this.state.name + " готовит инопланетное вторжение"
     });
-    let posts = this;
     connect.subscribe(e => {
       e = e.detail;
       if (e["type"] === "VKWebAppShowWallPostBoxResult") {
         let post =
           "vk.com/wall" + this.state.user_id + "_" + e["data"]["post_id"];
-        posts.setState({ post: post });
-        posts.setState({ activeView: "view3" });
+        this.setState({ post: post });
+        this.setState({ activeView: "view3" });
       } else if (e["type"] === "VKWebAppShowWallPostBoxFailed") {
         let error = e["data"]["error_type"];
-        posts.setState({ post: error });
-        posts.setState({ activeView: "view3" });
+        this.setState({ post: error });
+        this.setState({ activeView: "view3" });
       }
     });
+  }
+  getInfo() {
+    connect.send("VKWebAppCallAPIMethod", {
+      method: "friends.get",
+      params: { v: "5.80", access_token: this.state.access_token }
+    });
+    connect.subscribe(e => {
+      e = e.detail;
+      if (e["type"] === "VKWebAppCallAPIMethodResult") {
+        let friends_count = e["data"]["response"]["count"];
+        this.setState({ friends_count: friends_count });
+        this.setState({ activeView: "view2" });
+      } else if (e["type"] === "VKWebAppCallAPIMethodFailed") {
+        this.setState({ friends_count: "не удалось получить" });
+        this.setState({ activeView: "view2" });
+      }
+    });
+    if (this.state.friends_count === null) {
+      connect.send("VKWebAppCallAPIMethod", {
+        method: "friends.get",
+        params: { v: "5.80", access_token: this.state.access_token }
+      });
+    }
   }
 }
 
